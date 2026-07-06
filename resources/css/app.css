@@ -264,7 +264,8 @@ svg{ display:block; flex-shrink:0; }
 .triage-from{ font-weight:800; font-size:15px; }
 .triage-addr{ color:var(--text-faint); font-size:12.5px; }
 .triage-subject{ font-weight:700; font-size:14.5px; margin:10px 0 12px; }
-.triage-preview{ border-top:1px solid var(--border-soft); padding-top:14px; color:var(--text-dim); font-size:13.5px; max-height:220px; overflow-y:auto; line-height:1.65; }
+.triage-preview{ border-top:1px solid var(--border-soft); padding-top:14px; color:var(--text-dim); font-size:13.5px; max-height:220px; overflow:auto; line-height:1.65; }
+.triage-preview img{ max-width:100%; height:auto; }
 .triage-suggest{
   margin-top:18px; width:100%; display:flex; align-items:center; justify-content:space-between;
   background:var(--success-soft); border:1px solid transparent; color:var(--success); border-radius:11px;
