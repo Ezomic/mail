@@ -13,6 +13,7 @@
         "laravel/socialite": "^5.28",
         "laravel/tinker": "^3.0",
         "socialiteproviders/microsoft-graph": "^4.1",
+        "thijssensoftware/id-client": "^0.1.0",
         "webklex/laravel-imap": "^6.2"
     },
     "require-dev": {
@@ -89,5 +90,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [{
+        "name": "id-client",
+        "type": "vcs",
+        "url": "https://github.com/Ezomic/id-client.git"
+    }]
 }
