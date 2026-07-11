@@ -60,7 +60,7 @@ ok()   { echo "  ✓ $*"; }
 
 # A failure anywhere after maintenance mode is enabled must not strand the
 # site down — always try to bring it back up on exit, whatever the cause.
-MAINTENANCE_ACTIVE=false
+MAINTENANCE_ACTIVE="${DEPLOY_MAINTENANCE_ACTIVE:-false}"
 restore_on_failure() {
   local exit_code=$?
   if [[ "$exit_code" -ne 0 && "$MAINTENANCE_ACTIVE" == true ]]; then
@@ -70,22 +70,36 @@ restore_on_failure() {
 }
 trap restore_on_failure EXIT
 
-START=$(date +%s)
-echo "════════════════════════════════════════════"
-echo "  Deploying zero  —  $(date '+%Y-%m-%d %H:%M:%S')"
-echo "════════════════════════════════════════════"
+if [[ "${DEPLOY_RESUMED:-}" != "1" ]]; then
+  START=$(date +%s)
+  echo "════════════════════════════════════════════"
+  echo "  Deploying zero  —  $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "════════════════════════════════════════════"
 
-# ── 1. Maintenance mode ───────────────────────────────────────────────────────
-step "Enabling maintenance mode"
-$PHP artisan down --retry=10
-MAINTENANCE_ACTIVE=true
-ok "Site is down"
+  # ── 1. Maintenance mode ─────────────────────────────────────────────────────
+  step "Enabling maintenance mode"
+  $PHP artisan down --retry=10
+  MAINTENANCE_ACTIVE=true
+  ok "Site is down"
 
-# ── 2. Pull latest code ───────────────────────────────────────────────────────
-step "Pulling from origin/main"
-git fetch origin
-git reset --hard origin/main
-ok "$(git log -1 --format='%h %s')"
+  # ── 2. Pull latest code ─────────────────────────────────────────────────────
+  step "Pulling from origin/main"
+  git fetch origin
+  git reset --hard origin/main
+  ok "$(git log -1 --format='%h %s')"
+
+  # This git reset just rewrote the very file bash is currently executing.
+  # Bash reads scripts in buffered chunks, so the remaining steps below can
+  # silently run with stale pre-pull content even though `git log` above
+  # already shows the new commit — confirmed in practice: a supervisor
+  # program rename shipped in the same commit as this fix still ran with
+  # the old program names because of exactly this. Re-exec fresh from disk
+  # instead of trusting the rest of this in-memory run.
+  step "Re-executing with freshly pulled code"
+  exec env DEPLOY_RESUMED=1 DEPLOY_MAINTENANCE_ACTIVE=true DEPLOY_START="$START" APP_DIR="$APP_DIR" PHP="$PHP" bash "$0"
+fi
+
+START="${DEPLOY_START:-$(date +%s)}"
 
 # ── 3. Composer ───────────────────────────────────────────────────────────────
 step "Installing Composer dependencies"
