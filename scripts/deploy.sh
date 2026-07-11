@@ -18,7 +18,7 @@
 #   6. Clears and rebuilds caches
 #   7. Creates storage symlink if missing
 #   8. Sets correct permissions
-#   9. Restarts PHP-FPM and all mail-app supervisor programs
+#   9. Restarts PHP-FPM and all zero supervisor programs
 #  10. Takes the site out of maintenance mode
 #  11. Runs a smoke test (HTTP 200 on /)
 # =============================================================================
@@ -72,7 +72,7 @@ trap restore_on_failure EXIT
 
 START=$(date +%s)
 echo "════════════════════════════════════════════"
-echo "  Deploying mail-app  —  $(date '+%Y-%m-%d %H:%M:%S')"
+echo "  Deploying zero  —  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "════════════════════════════════════════════"
 
 # ── 1. Maintenance mode ───────────────────────────────────────────────────────
@@ -146,15 +146,15 @@ step "Restarting PHP-FPM"
 sudo systemctl reload php8.4-fpm
 ok "PHP-FPM reloaded"
 
-step "Restarting mail-app supervisor programs"
-sudo supervisorctl restart mail-scheduler:* mail-reverb:* mail-idle-10:* > /dev/null
+step "Restarting zero supervisor programs"
+sudo supervisorctl restart zero-scheduler:* zero-reverb:* zero-idle-10:* > /dev/null
 ok "Scheduler, Reverb, and IMAP IDLE restarted"
 
-# mail-queue has stopwaitsecs=3600 so an in-flight IMAP sync can finish
+# zero-queue has stopwaitsecs=3600 so an in-flight IMAP sync can finish
 # gracefully — don't block the deploy on that (a past deploy hung here for
 # the full SSH command timeout and got killed before reaching maintenance
 # mode being lifted). Let supervisor cycle it in the background instead.
-nohup sudo supervisorctl restart mail-queue:* > /tmp/mail-queue-restart.log 2>&1 &
+nohup sudo supervisorctl restart zero-queue:* > /tmp/zero-queue-restart.log 2>&1 &
 disown
 ok "Queue worker restart triggered in the background"
 
